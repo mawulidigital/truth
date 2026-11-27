@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Truth or Dare | Couples Game</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background: #10121c;
+  color: white;
+  text-align: center;
+}
+.container {
+  max-width: 520px;
+  margin: auto;
+}
+h1 { color: #ff6b9a; margin-bottom: 5px; }
+.subtitle { color: #aaa; margin-bottom: 25px; }
+.turn {
+  background: #222638;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+.turn strong { color: #ff79a7; }
+button {
+  border: none;
+  cursor: pointer;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 15px;
+}
+.turn button {
+  background: #ff6b9a;
+  color: #17121a;
+  margin-top: 10px;
+  font-weight: bold;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+.number {
+  background: #252a3d;
+  color: white;
+  height: 55px;
+  font-size: 18px;
+  font-weight: bold;
+}
+.number:active { background: #ff6b9a; }
+.number.used {
+  background: #151824;
+  color: #555;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.result {
+  display: none;
+  margin-top: 25px;
+  padding: 25px 18px;
+  border-radius: 15px;
+  background: #252a3d;
+}
+.type {
+  color: #ff79a7;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+.question {
+  font-size: 21px;
+  line-height: 1.5;
+  margin: 20px 0;
+}
+.next {
+  background: #ff6b9a;
+  color: #17121a;
+  font-weight: bold;
+}
+.reset {
+  margin-top: 25px;
+  background: transparent;
+  color: #aaa;
+  border: 1px solid #555;
+}
+.note { color: #999; font-size: 12px; margin-top: 20px; }
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>Truth or Dare ❤️</h1>
+<p class="subtitle">A little fun between two people</p>
+
+<div class="turn">
+  <p>It's <strong id="player">Player 1's</strong> turn!</p>
+  <button onclick="switchPlayer()">Switch Turn</button>
+</div>
+
+<p>Pick a number from 1 to 50</p>
+
+<div class="grid" id="grid"></div>
+
+<div class="result" id="result">
+  <p class="type" id="type"></p>
+  <h2 id="number"></h2>
+  <div class="question" id="question"></div>
+  <button class="next" onclick="closeResult()">Continue</button>
+</div>
+
+<button class="reset" onclick="resetGame()">Restart Game</button>
+
+<p class="note">No repeats. Two skips each. Respect each other's boundaries.</p>
+</div>
+
+<script>
+const tasks = [
+["TRUTH","What's your first impression of me?"],
+["DARE","Send me your funniest selfie."],
+["TRUTH","Have you ever been jealous because of me?"],
+["DARE","Send a 10-second voice note singing."],
+["TRUTH","What's one thing you find attractive about me?"],
+["DARE","Describe me using only three emojis."],
+["TRUTH","Have you ever hidden something from someone you dated?"],
+["DARE","Give me a new romantic nickname."],
+["TRUTH","What's your biggest relationship fear?"],
+["DARE","Send me a voice note saying three things you like about me."],
+["TRUTH","Have you ever had a crush on two people at once?"],
+["DARE","Tell me a romantic joke."],
+["TRUTH","What's something you wish I did more often?"],
+["DARE","Write me a short love poem."],
+["TRUTH","Have you ever flirted with someone just for fun?"],
+["DARE","Imitate how I talk in a voice note."],
+["TRUTH","What's your definition of cheating?"],
+["DARE","Describe our perfect date."],
+["TRUTH","Have you ever lost feelings for someone while dating them?"],
+["DARE","Send me your favourite picture of us."],
+["TRUTH","Do you still talk to anyone you once had feelings for?"],
+["DARE","Tell me something sweet without using the word love."],
+["TRUTH","Have you ever been tempted to cheat?"],
+["DARE","Send me a voice note telling me what you miss about me."],
+["TRUTH","What's one thing you could never forgive in a relationship?"],
+["DARE","Make up a funny story about how we first met."],
+["TRUTH","Have you ever hidden a conversation from your partner?"],
+["DARE","Tell me your most embarrassing romantic experience."],
+["TRUTH","Do you believe emotional cheating is real?"],
+["DARE","Give me three reasons why you would choose me again."],
+["TRUTH","Have you ever developed feelings for someone unexpectedly?"],
+["DARE","Send me a voice note saying my name romantically."],
+["TRUTH","What's one secret you've never told me?"],
+["DARE","Describe me in five words."],
+["TRUTH","Have you ever questioned our relationship?"],
+["DARE","Tell me your wildest dream date."],
+["TRUTH","What boundaries should exist between partners and their friends?"],
+["DARE","Ask me a question you've always been afraid to ask."],
+["TRUTH","Is there anything you find difficult to tell me?"],
+["DARE","Send me a voice note laughing for 10 seconds."],
+["TRUTH","Have you ever regretted something you did in a relationship?"],
+["DARE","Tell me something you have always wanted us to try together."],
+["TRUTH","What would make you lose trust in me?"],
+["DARE","Create a funny couple's slogan for us."],
+["TRUTH","Have you ever crossed a boundary in a relationship?"],
+["DARE","Tell me your favourite memory of us."],
+["TRUTH","If someone from your past wanted another chance, what would you do?"],
+["DARE","Send me a message as if we were meeting for the first time."],
+["TRUTH","What's something you think couples should never hide from each other?"],
+["DARE","Tell me one thing you want us to accomplish together."]
+];
+
+let used = [];
+let currentPlayer = 1;
+let skips = [2, 2];
+
+const grid = document.getElementById("grid");
+
+function createGrid() {
+  grid.innerHTML = "";
+  for (let i = 1; i <= 50; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = i;
+    btn.className = "number";
+    if (used.includes(i)) {
+      btn.classList.add("used");
+      btn.disabled = true;
+    }
+    btn.onclick = () => reveal(i);
+    grid.appendChild(btn);
+  }
+}
+
+function reveal(n) {
+  if (used.includes(n)) return;
+
+  used.push(n);
+  const task = tasks[n - 1];
+
+  document.getElementById("type").textContent = task[0];
+  document.getElementById("number").textContent = "Number " + n;
+  document.getElementById("question").textContent = task[1];
+
+  document.getElementById("result").style.display = "block";
+  createGrid();
+  document.getElementById("result").scrollIntoView({
+    behavior: "smooth"
+  });
+}
+
+function closeResult() {
+  document.getElementById("result").style.display = "none";
+  switchPlayer();
+}
+
+function switchPlayer() {
+  currentPlayer = currentPlayer === 1 ? 2 : 1;
+  document.getElementById("player").textContent =
+    "Player " + currentPlayer + "'s";
+}
+
+function resetGame() {
+  if (!confirm("Restart the game? All numbers will be available again.")) return;
+  used = [];
+  currentPlayer = 1;
+  skips = [2, 2];
+  document.getElementById("player").textContent = "Player 1's";
+  document.getElementById("result").style.display = "none";
+  createGrid();
+}
+
+createGrid();
+</script>
+</body>
+</html>
